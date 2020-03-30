@@ -1,0 +1,41 @@
+- name: Setup VS Code
+  hosts: all
+  become: yes
+  become_method: sudo
+  gather_facts: no
+  vars:
+    ansible_python_interpreter: '/usr/bin/python3'
+
+  pre_tasks:
+    - name: Ensure APT is updated
+      apt:
+        update_cache: true
+
+  tasks:
+    - name: Ensure VS Code dependencies are installed
+      apt:
+        pkg:
+          - software-properties-common
+          - apt-transport-https
+
+    - name: Ensure VS Code APT key is added
+      apt_key:
+        url: "https://packages.microsoft.com/keys/microsoft.asc"
+
+    - name: Ensure VS Code APT repository is added
+      apt_repository:
+        repo: "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main"
+        update_cache: true
+
+    - name: Ensure VS Code is installed
+      apt:
+        pkg:
+          - code
+
+    - name: remove duplicated apt source list
+      file:
+        path: "{{ item.path }}"
+        state: "{{ item.state }}"
+      with_items:
+        - { state: "absent", path: "/etc/apt/sources.list.d/vscode.list" }
+        - { state: "absent", path: "/etc/apt/sources.list.d/vscode.list.save" }

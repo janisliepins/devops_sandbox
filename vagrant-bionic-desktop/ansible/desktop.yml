@@ -1,0 +1,21 @@
+- name: Setup Ubuntu Desktop environment
+  hosts: all
+  become: yes
+  become_method: sudo
+  gather_facts: no
+  vars:
+    ansible_python_interpreter: '/usr/bin/python3'
+
+  pre_tasks:
+    - name: Ensure APT is updated
+      apt:
+        update_cache: true
+
+  tasks:
+    - name: Ensure Ubuntu Desktop packages are installed
+      apt:
+        pkg:
+          - xfce4
+          - lightdm
+          - lightdm-gtk-greeter
+          - xfce4-whiskermenu-plugin

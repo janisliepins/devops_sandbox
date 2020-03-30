@@ -1,0 +1,39 @@
+- name: Setup Google Chrome
+  hosts: all
+  become: yes
+  become_method: sudo
+  gather_facts: no
+  vars:
+    ansible_python_interpreter: '/usr/bin/python3'
+
+  pre_tasks:
+    - name: Ensure APT is updated
+      apt:
+        update_cache: true
+
+  tasks:
+    - name: Ensure Chrome APT key is added
+      apt_key:
+        url: "https://dl-ssl.google.com/linux/linux_signing_key.pub"
+
+    - name: Ensure Chrome APT repository is added
+      apt_repository:
+        repo: "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main"
+        update_cache: true
+
+    - name: Ensure Chrome is installed
+      apt:
+        pkg:
+          - "{{ item.name }}"
+        state: "{{ item.state }}"
+      with_items:
+        - { state: "absent", name: "chromium-browser" }
+        - { state: "latest", name: "google-chrome-stable" }
+
+    - name: Ensure duplicated apt source list is removed
+      file:
+        path: "{{ item.path }}"
+        state: "{{ item.state }}"
+      with_items:
+        - { state: "absent", path: "/etc/apt/sources.list.d/google-chrome.list" }
+        - { state: "absent", path: "/etc/apt/sources.list.d/google-chrome.list.save" }

@@ -1,0 +1,19 @@
+- name: Install Java
+  hosts: all
+  become: yes
+  become_method: sudo
+  gather_facts: yes
+  vars:
+    ansible_python_interpreter: '/usr/bin/python3'
+
+  pre_tasks:
+    - name: Ensure APT is updated
+      apt:
+        update_cache: true
+
+  tasks:
+    - name: Install Default OpenJDK
+      apt:
+        pkg:
+          - default-jdk
+          - default-jre-headless
