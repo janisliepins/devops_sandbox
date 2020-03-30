@@ -1,0 +1,189 @@
+# https://docs.docker.com/engine/security/https/
+
+# dockerd --tlsverify --tlscacert=ca.pem --tlscert=server-cert.pem --tlskey=server-key.pem -H=0.0.0.0:2376
+
+- name: Configure Docker daemon
+  template: 
+    src: oracle-cloud/daemon.json.j2
+    dest: /etc/docker/daemon.json
+  notify: "Restart Docker"
+
+- name: Ensure Docker configuration drop-in directory is present
+  file:
+    path: /etc/systemd/system/docker.service.d/
+    state: directory
+
+- name: Use the hosts key in daemon.json with systemd
+  template:
+    src: oracle-cloud/docker.conf.j2 
+    dest: /etc/systemd/system/docker.service.d/docker.conf
+  notify: "Restart Docker"
+
+- name: "Iptables: allow connection to Docker daemon {{ docker_daemon_exposed_port }} port"
+  iptables:
+    chain: INPUT
+    action: insert
+    rule_num: 6
+    protocol: tcp
+    destination_port: "{{ docker_daemon_exposed_port }}"
+    ctstate: NEW,ESTABLISHED
+    jump: ACCEPT
+  notify: "Restart Docker"
+
+- name: Ensure Docker daemon CA certificate directory is present
+  file:
+    path: "{{ ca_cert_path }}"
+    state: directory
+
+- name: Ensure Docker daemon server certificate directory is present
+  file:
+    path: "{{ server_cert_path }}"
+    state: directory
+
+- name: Ensure Docker daemon client certificate directory is present
+  file:
+    path: "{{ client_cert_path }}"
+    state: directory
+    owner: "{{ hostvars.docker_host.ansible_user }}"
+    group: "{{ hostvars.docker_host.ansible_user }}"
+
+
+########## CA ##########
+
+# openssl genrsa -aes256 -out ca-key.pem 4096
+
+- name: Ensure CA private key is present
+  openssl_privatekey:
+    path: "{{ ca_cert_path }}/ca-key.pem"
+    passphrase: "{{ ca_private_key_passphrase }}"
+    cipher: auto
+    mode: 0400
+    select_crypto_backend: cryptography
+  register: ca_key
+
+# openssl req -new -x509 -days 365 -key ca-key.pem -sha256 -out ca.pem
+
+- name: Ensure CA certificate request is present
+  openssl_csr:
+    path: "{{ client_cert_path }}/ca.csr"
+    privatekey_path: "{{ ca_cert_path }}/ca-key.pem"
+    privatekey_passphrase: "{{ ca_private_key_passphrase }}"
+    basic_constraints: CA:TRUE
+    create_subject_key_identifier: yes
+    basic_constraints_critical: yes
+    select_crypto_backend: cryptography
+  when: ca_key.changed
+
+- name: Ensure CA certificate is present
+  openssl_certificate:
+    path: "{{ client_cert_path }}/ca.pem"
+    csr_path: "{{ client_cert_path }}/ca.csr"
+    privatekey_path: "{{ ca_cert_path }}/ca-key.pem"
+    privatekey_passphrase: "{{ ca_private_key_passphrase }}"
+    provider: selfsigned
+    selfsigned_not_after: "+365d"
+    select_crypto_backend: cryptography
+    mode: 0444
+    owner: "{{ hostvars.docker_host.ansible_user }}"
+    group: "{{ hostvars.docker_host.ansible_user }}"
+  notify: "Restart Docker"
+
+- name: Ensure CA certificate request is absent
+  file:
+    path: "{{ client_cert_path }}/ca.csr"
+    state: absent
+
+
+########## SERVER ##########
+
+# openssl genrsa -out server-key.pem 4096
+
+- name: Ensure server private key is present
+  openssl_privatekey:
+    path: "{{ server_cert_path }}/server-key.pem"
+    mode: 0400
+    select_crypto_backend: cryptography
+  register: server_key
+
+# openssl req -subj "/CN=$HOST" -sha256 -new -key server-key.pem -out server.csr
+# echo subjectAltName = DNS:$HOST,IP:10.10.10.20,IP:127.0.0.1 >> extfile.cnf
+# echo extendedKeyUsage = serverAuth >> extfile.cnf
+
+- name: Ensure server certificate request is present
+  openssl_csr:
+    path: "{{ server_cert_path }}/server.csr"
+    privatekey_path: "{{ server_cert_path }}/server-key.pem"
+    select_crypto_backend: cryptography
+    common_name: "{{ hostvars.docker_host.ansible_host }}"
+    subjectAltName: 
+      - "IP:{{ hostvars.docker_host.ansible_host }}"
+    extended_key_usage:
+      - serverAuth
+  when: server_key.changed
+
+# openssl x509 -req -days 365 -sha256 -in server.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out server-cert.pem -extfile extfile.cnf
+
+- name: Ensure server certificate is present
+  openssl_certificate:
+    path: "{{ server_cert_path }}/server-cert.pem"
+    csr_path: "{{ server_cert_path }}/server.csr"
+    ownca_path: "{{ client_cert_path }}/ca.pem"
+    ownca_privatekey_path: "{{ ca_cert_path }}/ca-key.pem"
+    ownca_privatekey_passphrase: "{{ ca_private_key_passphrase }}"
+    provider: ownca
+    select_crypto_backend: cryptography
+    mode: 0444
+  notify: "Restart Docker"
+
+- name: Ensure server certificate request is absent
+  file:
+    path: "{{ server_cert_path }}/server.csr"
+    state: absent
+
+
+########## CLIENT ##########
+
+# openssl genrsa -out key.pem 4096
+
+- name: Ensure client private key is present
+  openssl_privatekey:
+    path: "{{ client_cert_path }}/key.pem"
+    mode: 0400
+    select_crypto_backend: cryptography
+    owner: "{{ hostvars.docker_host.ansible_user }}"
+    group: "{{ hostvars.docker_host.ansible_user }}"
+  register: client_key
+
+# openssl req -subj '/CN=client' -new -key key.pem -out client.csr
+# echo extendedKeyUsage = clientAuth > extfile-client.cnf
+
+- name: Ensure client certificate request is present
+  openssl_csr:
+    path: "{{ client_cert_path }}/client.csr"
+    privatekey_path: "{{ client_cert_path }}/key.pem"
+    select_crypto_backend: cryptography
+    common_name: "client"
+    extended_key_usage:
+      - clientAuth
+  when: client_key.changed
+
+# openssl x509 -req -days 365 -sha256 -in client.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out cert.pem -extfile extfile-client.cnf
+
+- name: Ensure client certificate is present
+  openssl_certificate:
+    path: "{{ client_cert_path }}/cert.pem"
+    csr_path: "{{ client_cert_path }}/client.csr"
+    ownca_path: "{{ client_cert_path }}/ca.pem"
+    ownca_privatekey_path: "{{ ca_cert_path }}/ca-key.pem"
+    ownca_privatekey_passphrase: "{{ ca_private_key_passphrase }}"
+    provider: ownca
+    select_crypto_backend: cryptography
+    mode: 0444
+    owner: "{{ hostvars.docker_host.ansible_user }}"
+    group: "{{ hostvars.docker_host.ansible_user }}"
+  notify: "Restart Docker"
+
+- name: Ensure client certificate request is absent
+  file:
+    path: "{{ client_cert_path }}/client.csr"
+    state: absent

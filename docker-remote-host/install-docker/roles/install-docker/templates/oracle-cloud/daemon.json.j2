@@ -1,0 +1,7 @@
+{
+  "hosts": ["tcp://0.0.0.0:{{ docker_daemon_exposed_port }}", "fd://"],
+  "tlsverify": true,
+  "tlscacert": "{{ client_cert_path }}/ca.pem",
+  "tlscert": "{{ server_cert_path }}/server-cert.pem",
+  "tlskey": "{{ server_cert_path }}/server-key.pem"
+}

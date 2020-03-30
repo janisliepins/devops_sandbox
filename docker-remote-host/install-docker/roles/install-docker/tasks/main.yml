@@ -1,0 +1,9 @@
+- import_tasks: install-docker.yml
+  tags:
+    - install
+- import_tasks: install-docker-compose.yml
+  tags:
+    - install
+- import_tasks: configure-remote-host.yml
+  tags:
+    - tls

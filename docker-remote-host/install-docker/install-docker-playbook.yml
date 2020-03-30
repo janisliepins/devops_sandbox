@@ -1,0 +1,9 @@
+- name: Docker intallation play for Ubuntu 18.04
+  hosts: all
+  become: yes
+  gather_facts: no
+  tasks:
+    - name: Ensure Docker is installed
+      import_role: 
+        name: install-docker
+
