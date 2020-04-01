@@ -1,0 +1,25 @@
+---
+
+### Wait for some time to get and assert the container's real status - container might start with status running but fail or restart right after
+- name: Wait for containers
+  pause:
+    seconds: 15
+
+- name: Get info about containers
+  docker_container_info:
+    name: "{{ item }}"
+  register: container_info
+  no_log: true
+  with_items:
+    - "{{ container_names }}"
+
+- name: Assert that containers are in running state
+  assert:
+    quiet: yes
+    that:
+      - "'running' in item.container.State.Status"
+    success_msg: "{{ item.container.Name }} container is running!"
+    fail_msg : "{{ item.container.Name }} container is NOT running!"
+  loop: "{{ container_info.results|flatten(levels=1) }}"
+  loop_control:
+    label: "{{ item.container.Name }}"

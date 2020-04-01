@@ -1,0 +1,97 @@
+---
+
+- name: Install Docker
+  hosts: docker_group
+  become: yes
+  become_method: sudo
+  environment:
+    http_proxy: "{{ http_proxy }}"
+    https_proxy: "{{ https_proxy }}"
+
+  pre_tasks:
+    - import_role:
+        name: common
+        tasks_from: sync-time
+      tags:
+        - always
+
+    - import_role:
+        name: common
+        tasks_from: apt-update
+      tags:
+        - always
+
+  tasks:
+    - import_role:
+        name: docker
+        tasks_from: install-docker
+      tags:
+        - base
+
+    - import_role:
+        name: docker
+        tasks_from: install-docker-compose
+      tags:
+        - compose
+  tags:
+    - install
+
+  post_tasks:
+    - import_role:
+        name: common
+        tasks_from: service-status-check
+      tags:
+        - always
+      vars:
+        service_names:
+          - "docker"
+
+
+- name: Configure Docker service on docker_cloud
+  hosts: docker_cloud
+  become: yes
+  become_method: sudo
+  gather_facts: no
+  environment:
+    http_proxy: "{{ http_proxy }}"
+    https_proxy: "{{ https_proxy }}"
+  tasks:
+    - import_role:
+        name: docker
+        tasks_from: configure-docker-cloud
+      tags:
+        - docker_cloud
+
+- name: Configure Docker service on jenkins
+  hosts: jenkins
+  become: yes
+  become_method: sudo
+  gather_facts: no
+  tasks:
+    - import_role:
+        name: docker
+        tasks_from: configure-jenkins
+      tags:
+        - jenkins
+
+# - name: Configure Docker service on Docker registry
+#   hosts: docker_registry
+#   become: yes
+#   become_method: sudo
+#   gather_facts: no
+#   tasks:
+#     - import_role:
+#         name: docker
+#         tasks_from: configure-docker-registry
+#       tags:
+#         - registry
+
+  # post_tasks:
+  #   - import_role:
+  #       name: common
+  #       tasks_from: service-status-check
+  #     tags:
+  #       - always
+  #     vars:
+  #       service_name:
+  #         - docker

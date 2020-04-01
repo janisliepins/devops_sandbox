@@ -1,0 +1,142 @@
+unclassified:
+  appInsightsGlobalConfig:
+    appInsightsEnabled: false
+  gitSCM:
+    createAccountBasedOnEmail: false
+
+  globalConfigFiles:
+    configs:
+
+    - groovyScript:
+        content: |
+          @Library('ci-library') _
+
+          Map parameters = [
+              // These tools must be configured in Jenkins Global Tool Configuration.
+              tools: [
+                  maven: '3.6.0',
+                  jdk: 'JDK11'
+              ],
+              nodeLabel: 'jnlp-slave'
+          ]
+
+          mavenPipeline parameters
+        id: "jenkinsfile-mvn"
+        name: "Jenkinsfile for Maven project"
+        providerId: "org.jenkinsci.plugins.configfiles.groovy.GroovyScript"
+
+    - globalMavenSettings:
+        comment: "nexus: ${NEXUS_URL}"
+        content: |-
+          <?xml version="1.0" encoding="UTF-8"?>
+          <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+            <interactiveMode>false</interactiveMode>
+            <!--proxies><proxy><id>http-proxy</id><active>true</active><protocol>http</protocol><host>http://cache.konts.lv</host><port>8080</port><nonProxyHosts>.local.net,.konts.lv</nonProxyHosts></proxy><proxy><id>https-proxy</id><active>true</active><protocol>https</protocol><host>http://cache.konts.lv</host><port>8080</port><nonProxyHosts>.local.net,.konts.lv</nonProxyHosts></proxy></proxies-->
+            <servers>
+              <server>
+                <id>nexus-snapshots</id>
+              </server>
+              <server>
+                <id>nexus-releases</id>
+              </server>
+            </servers>
+            <mirrors>
+              <mirror>
+                <id>central</id>
+                <mirrorOf>*</mirrorOf>
+                <name>central</name>
+                <url>${NEXUS_URL}/repository/maven-group/</url>
+              </mirror>
+            </mirrors>
+            <distributionManagement>
+              <snapshotRepository>
+                <id>nexus-snapshots</id>
+                <url>${NEXUS_URL}/repository/maven-snapshots/</url>
+              </snapshotRepository>
+              <repository>
+                <id>nexus-releases</id>
+                <url>${NEXUS_URL}/repository/maven-releases/</url>
+              </repository>
+            </distributionManagement>
+            <profiles>
+              <profile>
+                <id>jenkins-profile</id>
+                <properties>
+                  <altDeploymentRepository>nexus-snapshots::default::${NEXUS_URL}/repository/maven-snapshots/</altDeploymentRepository>
+                  <altSnapshotDeploymentRepository>nexus-snapshots::default::${NEXUS_URL}/repository/maven-snapshots/</altSnapshotDeploymentRepository>
+                  <altReleaseDeploymentRepository>nexus-releases::default::${NEXUS_URL}/repository/maven-releases/</altReleaseDeploymentRepository>
+                </properties>
+                <repositories>
+                  <repository>
+                    <id>maven-group</id>
+                    <url>${NEXUS_URL}/repository/maven-group/</url>
+                  </repository>
+                </repositories>
+                <pluginRepositories>
+                  <pluginRepository>
+                    <id>maven-group</id>
+                    <url>${NEXUS_URL}/repository/maven-group/</url>
+                  </pluginRepository>
+                </pluginRepositories>
+              </profile>
+            </profiles>
+            <activeProfiles>
+              <activeProfile>jenkins-profile</activeProfile>
+            </activeProfiles>
+          </settings>
+        id: "maven-global-settings"
+        isReplaceAll: true
+        name: "Maven Global Settings"
+        providerId: "org.jenkinsci.plugins.configfiles.maven.GlobalMavenSettingsConfig"
+        serverCredentialMappings:
+        - credentialsId: "nexus-user-password"
+          serverId: "nexus-snapshots"
+        - credentialsId: "nexus-user-password"
+          serverId: "nexus-releases"
+
+  # globalmavenconfig:
+  #   globalSettingsProvider:
+  #     - id: "maven-global-settings-LOCAL"
+
+  globalLibraries:
+    libraries:
+    - allowVersionOverride: false
+      defaultVersion: "master"
+      includeInChangesets: false
+      name: "ci-library"
+      retriever:
+        modernSCM:
+          scm:
+            git:
+              credentialsId: "git-ssh-key"
+              id: "f79990d3-6df7-4d29-bfa9-cd8f41b018af"
+              remote: "${GIT_SSH_URL}/~bundimar/ci.library.git"
+
+  location:
+    adminAddress: "${JENKINS_ADMIN_ADDRESS}"
+    url: "${JENKINS_URL}"
+
+  extendedEmailPublisher:
+    # adminRequiredForTemplateTesting: false
+    # allowUnregisteredEnabled: false
+    # charset: "UTF-8"
+    # debugMode: false
+    # defaultBody: "$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS:\r\n\r\nCheck\
+    #   \ console output at $BUILD_URL to view the results."
+    defaultContentType: "text/html"
+    # defaultSubject: "$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS!"
+    # maxAttachmentSize: -1
+    # maxAttachmentSizeMb: 0
+    # precedenceBulk: false
+    smtpServer: "${SMTP_HOST}"
+    # useSsl: false
+    # watchingEnabled: false
+
+  mailer:
+    authentication:
+      password: "${SMTP_SERVER_PASSWORD}"
+      username: "${SMTP_SERVER_USER}"
+    charset: "UTF-8"
+    defaultSuffix: "@tieto.com"
+    smtpHost: "${SMTP_HOST}"
+    useSsl: false

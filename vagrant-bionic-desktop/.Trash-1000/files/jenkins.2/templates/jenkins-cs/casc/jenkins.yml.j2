@@ -1,0 +1,324 @@
+jenkins:
+  systemMessage: "{{ prefix }} Jenkins CS instance"
+  agentProtocols:
+  - "JNLP4-connect"
+  - "Ping"
+  authorizationStrategy:
+    projectMatrix:
+      permissions:
+      - "Job/Build:izstrade"
+      - "Job/Read:cimonitor"
+      - "Job/Read:izstrade"
+      - "Overall/Administer:aksenale"
+      - "Overall/Administer:bundimar"
+      - "Overall/Administer:grinbvit"
+      - "Overall/Administer:jenkins"
+      - "Overall/Administer:korsarom"
+      - "Overall/Administer:liepijan"
+      - "Overall/Administer:marcegeo"
+      - "Overall/Administer:nakiphas"
+      - "Overall/Administer:ramantom"
+      - "Overall/Read:authenticated"
+      - "Overall/Read:cimonitor"
+      - "Overall/Read:izstrade"
+  crumbIssuer:
+    standard:
+      excludeClientIPFromCrumb: true
+  disableRememberMe: false
+  globalNodeProperties:
+  - envVars:
+      env:
+      - key: "CI_FLB_RESOURCE_REP_REF"
+        value: "{{ hostvars.jenkins.jenkins_ci_branch }}"
+      - key: "CI_GIT_URL"
+        value: "ssh://git@cvs.konts.lv:7999/te_trm"
+      - key: "CI_PIPE_JOB_REF"
+        value: "{{ hostvars.jenkins.jenkins_ci_pipe_branch }}"
+      - key: "CI_PIPE_SCMCALC_BRANCH"
+        value: "{{ hostvars.jenkins.jenkins_ci_pipe_branch }}"
+      - key: "CI_PIPE_SCMCALC_REPO"
+        value: "refs/remotes/origin"
+      - key: "CI_STASH_HOST"
+        value: "http://cvs.konts.lv:7990"
+      - key: "CI_STASH_PROJECT"
+        value: "TE_TRM"
+  markupFormatter:
+    rawHtml:
+      disableSyntaxHighlighting: false
+  # mode: EXCLUSIVE
+  # myViewsTabBar: "standard"
+  numExecutors: 30
+  # projectNamingStrategy: "standard"
+  proxy:
+    name: "cache.konts.lv"
+    password: ""
+    port: 8080
+  quietPeriod: 5
+  remotingSecurity:
+    enabled: true
+  scmCheckoutRetryCount: 0
+  securityRealm:
+    ldap:
+      cache:
+        size: 20
+        ttl: 300
+      configurations:
+      - displayNameAttributeName: "cn"
+        inhibitInferRootDN: false
+        mailAddressAttributeName: "mailAlternateAddress"
+        managerDN: "cn=pam,ou=sysadm,dc=konts,dc=lv"
+        # TODO: create secret variable
+        managerPasswordSecret: "74e09eRsx0v1G+G"
+        rootDN: "dc=konts,dc=lv"
+        server: "ldaps://ldap.konts.lv:636"
+      disableMailAddressResolver: false
+      groupIdStrategy: "caseInsensitive"
+      userIdStrategy: "caseInsensitive"
+  # TODO: create as variable
+  slaveAgentPort: 59898
+  # updateCenter:
+  #   sites:
+  #   - id: "default"
+  #     url: "https://updates.jenkins.io/update-center.json"
+
+  clouds:
+  # TODO: Think about this solution. Upgrade to Vbox 5.x ???
+  - virtualBox:
+      displayName: "VirtualBox_server_prodigy"
+      password: "Parole1"
+      url: "http://10.57.5.23:18084"
+      username: "vmadmin"
+
+  - docker:
+      containerCap: 20
+      dockerApi:
+        connectTimeout: 60
+        dockerHost:
+          credentialsId: "{{ jenkins_cs_docker_cloud_credential_id }}"
+          uri: "tcp://{{ hostvars.docker_cloud.ansible_host }}:2375"
+        readTimeout: 60
+
+      name: "MDC"
+      templates:
+      - connector:
+          jnlp:
+            entryPointArguments:
+            - "sh"
+            - "-c"
+            - "wget ^${JENKINS_URL}jnlpJars/slave.jar && java -jar slave.jar -jnlpUrl\
+              \ ^${JENKINS_URL}computer/^${NODE_NAME}/slave-agent.jnlp -secret ^${JNLP_SECRET}"
+            entryPointArgumentsString: |-
+              sh
+              -c
+              wget ^${JENKINS_URL}jnlpJars/slave.jar && java -jar slave.jar -jnlpUrl ^${JENKINS_URL}computer/^${NODE_NAME}/slave-agent.jnlp -secret ^${JNLP_SECRET}
+            jnlpLauncher:
+              workDirSettings:
+                disabled: true
+                failIfWorkDirIsMissing: false
+                internalDir: "remoting"
+        dockerTemplateBase:
+          image: "{{ docker_cloud_build_images.dc_prebuild_wg.new_tag }}"
+          network: "{{ jenkins_cs_builder_network_name }}"
+          pullCredentialsId: "DockerR1"
+          volumes:
+          - "/mnt1/ftp/exchange:/work/exchange:rw"
+          volumesString: |
+            /mnt1/ftp/exchange:/work/exchange:rw
+        instanceCapStr: "9"
+        labelString: "{{ docker_cloud_build_images.dc_prebuild_wg.label }}"
+        mode: EXCLUSIVE
+        pullStrategy: PULL_ALWAYS
+        remoteFs: "/work/ci"
+        retentionStrategy:
+          idleMinutes: 5
+      - connector:
+          jnlp:
+            entryPointArguments:
+            - "sh"
+            - "-c"
+            - "wget ^${JENKINS_URL}jnlpJars/slave.jar && java -jar slave.jar -jnlpUrl\
+              \ ^${JENKINS_URL}computer/^${NODE_NAME}/slave-agent.jnlp -secret ^${JNLP_SECRET}"
+            entryPointArgumentsString: |-
+              sh
+              -c
+              wget ^${JENKINS_URL}jnlpJars/slave.jar && java -jar slave.jar -jnlpUrl ^${JENKINS_URL}computer/^${NODE_NAME}/slave-agent.jnlp -secret ^${JNLP_SECRET}
+            jnlpLauncher:
+              workDirSettings:
+                disabled: true
+                failIfWorkDirIsMissing: false
+                internalDir: "remoting"
+        dockerTemplateBase:
+          image: "{{ docker_cloud_build_images.dc_prebuild_wd2.new_tag }}"
+          network: "{{ jenkins_cs_builder_network_name }}"
+          pullCredentialsId: "DockerR1"
+          volumes:
+          - "/mnt1/ftp/exchange:/work/exchange:rw"
+          - "{{ jenkins_cs_builder_volume_name }}:/root/.ssh:ro"
+          volumesString: |-
+            /mnt1/ftp/exchange:/work/exchange:rw
+            {{ jenkins_cs_builder_volume_name }}:/root/.ssh:ro
+        instanceCapStr: "9"
+        labelString: "{{ docker_cloud_build_images.dc_prebuild_wd2.label }}"
+        mode: EXCLUSIVE
+        pullStrategy: PULL_ALWAYS
+        remoteFs: "/work/ci"
+        retentionStrategy:
+          idleMinutes: 5
+      - connector:
+          jnlp:
+            entryPointArguments:
+            - "sh"
+            - "-c"
+            - "wget ^${JENKINS_URL}jnlpJars/slave.jar && java -jar slave.jar -jnlpUrl\
+              \ ^${JENKINS_URL}computer/^${NODE_NAME}/slave-agent.jnlp -secret ^${JNLP_SECRET}"
+            entryPointArgumentsString: |-
+              sh
+              -c
+              wget ^${JENKINS_URL}jnlpJars/slave.jar && java -jar slave.jar -jnlpUrl ^${JENKINS_URL}computer/^${NODE_NAME}/slave-agent.jnlp -secret ^${JNLP_SECRET}
+            jnlpLauncher:
+              workDirSettings:
+                disabled: true
+                failIfWorkDirIsMissing: false
+                internalDir: "remoting"
+        dockerTemplateBase:
+          image: "{{ docker_cloud_build_images.dc_wg_clean.new_tag }}"
+          network: "{{ jenkins_cs_builder_network_name }}"
+          pullCredentialsId: "DockerR1"
+          volumes:
+          - "{{ jenkins_cs_builder_volume_name }}:/root/.ssh:ro"
+          volumesString: "{{ jenkins_cs_builder_volume_name }}:/root/.ssh:ro"
+        instanceCapStr: "3"
+        labelString: "{{ docker_cloud_build_images.dc_wg_clean.label }}"
+        remoteFs: "/work/ci"
+
+  # - docker:
+  #     disabled:
+  #       disabledByChoice: false
+  #       enabledByChoice: true
+  #     dockerApi:
+  #       connectTimeout: 60
+  #       readTimeout: 60
+  #       dockerHost:
+  #         uri: "tcp://172.21.120.11:2375"
+  #     name: "ORACLE_CLOUD_DOCKER"
+  #     templates:
+  #     - connector:
+  #         jnlp:
+  #           entryPointArguments:
+  #           - "sh"
+  #           - "-c"
+  #           - "wget ^${JENKINS_URL}/jnlpJars/slave.jar && java -jar slave.jar -jnlpUrl\
+  #             \ ^${JENKINS_URL}/computer/^${NODE_NAME}/slave-agent.jnlp -secret ^${JNLP_SECRET}"
+  #           entryPointArgumentsString: |-
+  #             sh
+  #             -c
+  #             wget ^${JENKINS_URL}/jnlpJars/slave.jar && java -jar slave.jar -jnlpUrl ^${JENKINS_URL}/computer/^${NODE_NAME}/slave-agent.jnlp -secret ^${JNLP_SECRET}
+  #           jnlpLauncher:
+  #             workDirSettings:
+  #               disabled: true
+  #               failIfWorkDirIsMissing: false
+  #               internalDir: "remoting"
+  #       dockerTemplateBase:
+  #         image: "docker.konts.lv/cs/ci/wg/build/test:clean"
+  #       instanceCapStr: "100"
+  #       labelString: "cloud-build-clean"
+  #       pullStrategy: PULL_ALWAYS
+  #       pullTimeout: 300
+  #       remoteFs: "/work/ci"
+
+  # - kubernetes:
+  #     name: "advanced-k8s-config"
+  #     serverUrl: "https://avanced-k8s-config:443"
+  #     serverCertificate: "serverCertificate"
+  #     skipTlsVerify: true
+  #     credentialsId: "advanced-k8s-credentials"
+  #     namespace: "default"
+  #     jenkinsUrl: "http://jenkins/"
+  #     jenkinsTunnel: "jenkinsTunnel"
+  #     containerCapStr: 42
+  #     maxRequestsPerHostStr: 64
+  #     retentionTimeout: 5
+  #     connectTimeout: 10
+  #     readTimeout: 20
+
+  #     templates:
+  #       - name: "test"
+  #         serviceAccount: "serviceAccount"
+  #         instanceCap: 1234
+  #         idleMinutes: 0
+  #         label: "label"
+  #         volumes:
+  #           - hostPathVolume:
+  #               mountPath: "mountPath"
+  #               hostPath: "hostPath"
+
+  #         containers:
+  #           - name: "name"
+  #             image: "image"
+  #             privileged: true
+  #             alwaysPullImage: true
+  #             command: "command"
+  #             args: "args"
+  #             workingDir: "workingDir"
+  #             ttyEnabled: true
+  #             resourceRequestCpu: "resourceRequestCpu"
+  #             resourceRequestMemory: "resourceRequestMemory"
+  #             resourceLimitCpu: "resourceLimitCpu"
+  #             resourceLimitMemory: "resourceLimitMemory"
+  #         imagePullSecrets:
+  #           - name: "imagePullSecrets"
+
+  #         envVars:
+  #           - envVar:
+  #               key: "FOO"
+  #               value: "BAR"
+
+  #       - name: "k8s-slave"
+  #         namespace: "default"
+  #         label: "linux-x86_64"
+  #         nodeUsageMode: EXCLUSIVE
+  #         containers:
+  #           - name: "jnlp"
+  #             image: "jenkinsci/jnlp-slave:latest"
+  #             alwaysPullImage: true
+  #             workingDir: "/home/jenkins"
+  #             ttyEnabled: true
+  #             resourceRequestCpu: "500m"
+  #             resourceLimitCpu: "1000m"
+  #             resourceRequestMemory: "1Gi"
+  #             resourceLimitMemory: "2Gi"
+  #         volumes:
+  #           - emptyDirVolume:
+  #               memory: false
+  #               mountPath: "/tmp"
+  #         idleMinutes: "1"
+  #         activeDeadlineSeconds: "120"
+  #         slaveConnectTimeout: "1000"
+
+  # - baremetal:
+  #   cloudName: "oracle-cloud"
+  #   maxAsyncThreads: "50"
+  #   nextTemplateId: 1
+  #   templates:
+  #   - assignPublicIP: false
+  #     availableDomain: "PmJK:EU-FRANKFURT-1-AD-1"
+  #     compartmentId: "ocid1.compartment.oc1..aaaaaaaaqu36vbwrfxqmxldrxod726jbkcxwncjb5bwviytchpvycazwpbta"
+  #     description: "Jenkins build agent for Worldline on Oracle Cloud VM"
+  #     idleTerminationMinutes: "30"
+  #     imageCompartmentId: "ocid1.compartment.oc1..aaaaaaaaqu36vbwrfxqmxldrxod726jbkcxwncjb5bwviytchpvycazwpbta"
+  #     imageId: "ocid1.image.oc1.eu-frankfurt-1.aaaaaaaa7u6c2gtk65mrrgdpgta3ig6im3o2tvxxmsvfx73pk6iktgm2wpcq"
+  #     initScriptTimeoutSeconds: 120
+  #     labelString: "oracle-cloud"
+  #     mode: EXCLUSIVE
+  #     numExecutors: 1
+  #     remoteFS: "/tmp"
+  #     shape: "VM.Standard2.2"
+  #     sshConnectTimeoutSeconds: "900"
+  #     startTimeoutSeconds: "900"
+  #     subnetId: "ocid1.subnet.oc1.eu-frankfurt-1.aaaaaaaaji3ku3pbf25twojvhg4n3cpfpfpwuwfcjsbz75dj2ojkhttmfyfa"
+  #     templateId: 0
+  #     usePublicIP: false
+  #     vcnCompartmentId: "ocid1.compartment.oc1..aaaaaaaaqu36vbwrfxqmxldrxod726jbkcxwncjb5bwviytchpvycazwpbta"
+  #     vcnId: "ocid1.vcn.oc1.eu-frankfurt-1.aaaaaaaanemoubrpz6xug3dnfulhoqdkj6can5whodgecuqpja62gnrw7p6q"
+
+  {{ hostvars.jenkins.casc_nodes }}

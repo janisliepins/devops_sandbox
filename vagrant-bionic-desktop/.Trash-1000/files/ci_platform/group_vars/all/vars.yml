@@ -1,0 +1,11 @@
+---
+
+# GLOBAL VARIABLES FOR ALL INVENTORIES
+
+ansible_connection: ssh
+ansible_port: 22
+
+http_proxy: http://cache.konts.lv:8080
+https_proxy: http://cache.konts.lv:8080
+
+production_docker_registry_host: "docker.konts.lv"

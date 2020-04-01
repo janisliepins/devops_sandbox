@@ -1,0 +1,31 @@
+- name: Ensure {{ prefix }} Jenkins STD file directory is present
+  copy:
+    src: jenkins-std/configuration
+    dest: "{{ jenkins_std_file_path }}/"
+
+- name: Ensure {{ prefix }} Jenkins STD Docker Compose template is present
+  template:
+    src: jenkins-std/docker-compose.yml.j2
+    dest: "{{ jenkins_std_file_path }}/docker-compose.yml"
+
+- name: Ensure {{ prefix }} Jenkins STD environment variable file is present
+  template:
+    src: jenkins-std/dev.env.j2
+    dest: "{{ jenkins_std_file_path }}/dev.env"
+
+- name: Log into {{ registry_host }}
+  docker_login:
+    registry: "{{ registry_host }}"
+    username: "{{ registry_credentials.username }}"
+    password: "{{ registry_credentials.password }}"
+
+- name: Ensure {{ prefix }} Jenkins STD service is running
+  docker_compose:
+    project_name: "{{ jenkins_std_prefix }}"
+    project_src: "{{ jenkins_std_file_path }}"
+    remove_images: all
+    pull: yes
+    recreate: smart
+    # TEMP
+    remove_volumes: yes
+    state: present

@@ -1,0 +1,117 @@
+all:
+  hosts:
+    jenkins:
+      ansible_host: 10.57.9.89
+    remote_docker:
+      ansible_host: 10.57.6.135
+  vars:    
+    ansible_password: Cardsuite123$$$
+    ansible_become_password: Cardsuite123$$$
+    ansible_python_interpreter: '/usr/bin/python3'
+    ansible_user: ansible
+    ansible_ssh_extra_args: "-o StrictHostKeyChecking=no"
+    provider: csp
+    prefix: test
+    jenkins_ci_branch: "release/jenkins-{{ prefix }}"
+    jenkins_ci_pipe_branch: "release/jenkins-{{ prefix }}"
+    casc_nodes: |
+      nodes:
+        - permanent:
+            labelString: "inst-ri0-ora121020"
+            launcher:
+              ssh:
+                credentialsId: "a5f7a0fb-3ecf-4760-9f23-b9a97df2c07a"
+                host: "10.57.14.79"
+                launchTimeoutSeconds: 180
+                maxNumRetries: 300
+                port: 22
+                retryWaitTime: 5
+                sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+            mode: EXCLUSIVE
+            name: "ci.CI-0-4643"
+            nodeDescription: "ri0 for WD2 docker installations"
+            nodeProperties:
+            - envVars:
+                env:
+                - key: "JAVA_HOME"
+                  value: "/app/java/latest"
+            numExecutors: 1
+            remoteFS: "/app/ci"
+            retentionStrategy: "always"
+        - permanent:
+            labelString: "inst-ri0-ora122010"
+            launcher:
+              ssh:
+                credentialsId: "a5f7a0fb-3ecf-4760-9f23-b9a97df2c07a"
+                host: "10.57.14.97"
+                launchTimeoutSeconds: 180
+                maxNumRetries: 300
+                port: 22
+                retryWaitTime: 5
+                sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+            mode: EXCLUSIVE
+            name: "ci.CI-0-4801"
+            nodeDescription: "ri0 for WG docker installations"
+            nodeProperties:
+            - envVars:
+                env:
+                - key: "JAVA_HOME"
+                  value: "/app/java/latest"
+            numExecutors: 1
+            remoteFS: "/app/ci"
+            retentionStrategy: "always"
+        - permanent:
+            labelString: "inst-ri0-ora193000"
+            launcher:
+              ssh:
+                credentialsId: "a5f7a0fb-3ecf-4760-9f23-b9a97df2c07a"
+                host: "10.57.14.92"
+                launchTimeoutSeconds: 300
+                maxNumRetries: 0
+                port: 22
+                retryWaitTime: 0
+                sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+            name: "ci.CI-0-4802"
+            nodeDescription: "ri0 for WG docker installations"
+            numExecutors: 1
+            remoteFS: "/app/ci"
+            retentionStrategy: "always"
+        - permanent:
+            labelString: "pkg-ri0-ora19.3-db2"
+            launcher:
+              ssh:
+                credentialsId: "a5f7a0fb-3ecf-4760-9f23-b9a97df2c07a"
+                host: "10.57.14.83"
+                launchTimeoutSeconds: 180
+                maxNumRetries: 300
+                port: 22
+                retryWaitTime: 5
+                sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+            mode: EXCLUSIVE
+            name: "ci.CI-0-4811"
+            nodeDescription: "WG- ORA19"
+            numExecutors: 1
+            remoteFS: "/app/ci"
+            retentionStrategy: "always"
+        - permanent:
+            labelString: "pkg-ri0-ora122010 pkg-ri0-ora122010-db2 test-tools manual sonar"
+            launcher:
+              ssh:
+                credentialsId: "a5f7a0fb-3ecf-4760-9f23-b9a97df2c07a"
+                host: "10.57.14.88"
+                launchTimeoutSeconds: 180
+                maxNumRetries: 300
+                port: 22
+                retryWaitTime: 5
+                sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+            mode: EXCLUSIVE
+            name: "ci.CI-0-4812"
+            nodeDescription: "ri0 for WD2"
+            nodeProperties:
+            - envVars:
+                env:
+                - key: "JAVA_HOME"
+                  value: "/app/java/latest"
+            numExecutors: 1
+            remoteFS: "/app/ci"
+            retentionStrategy: "always"

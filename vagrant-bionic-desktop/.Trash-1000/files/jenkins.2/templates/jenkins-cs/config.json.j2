@@ -1,0 +1,29 @@
+{
+  "host": "{{ monster_api_prefix }}",
+  "port": "9002",
+  "jenkinsUrl": "{{ jenkins_dns }}",
+
+  "db": {
+    "host": "{{ monster_db_prefix }}",
+    "port": "3306",
+    "dialect": "mysql",
+    "timezone": "Europe/Riga",
+    "database": "{{ MYSQL_DATABASE }}",
+    "username": "{{ MYSQL_USER }}",
+    "password": "{{ MYSQL_PASSWORD }}"
+  },
+
+  "rss": {
+    "title": "{{ jenkins_dns }} (local)",
+    "maxItems": 50
+  },
+
+  "jwtPrivateKeyPath": "secret/jwt-secret.key",
+  "jwtPublicKeyPath": "secret/jwt-secret.key.pub",
+
+  "log": {
+    "level": "debug",
+    "logDirectory": "./log",
+    "consoleLogEnabled": true
+  }
+}

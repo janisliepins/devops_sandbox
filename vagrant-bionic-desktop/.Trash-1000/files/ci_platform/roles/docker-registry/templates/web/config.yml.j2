@@ -1,0 +1,24 @@
+registry:
+  # Docker registry url
+  url: 'https://{{ hostvars.docker_registry.ansible_host }}:443/v2'
+  # web registry context path
+  # empty string for root context, /app to make web registry accessible on http://host/app
+  context_path: ''
+  # Trust any SSL certificate when connecting to registry
+  trust_any_ssl: true
+  #  base64 encoded token for basic authentication
+  basic_auth: 'cmVnaXN0cnlHdWk6UmVnaXN0cnlHdWlQYXNzd29yZDE'
+  # To allow image delete, should be false
+  readonly: false
+  # Docker registry fqdn
+  name: '{{ hostvars.docker_registry.ansible_host }}:443'
+  # Authentication settings
+  auth:
+    # Enable authentication
+    enabled: true
+    # Token issuer
+    # should equals to auth.token.issuer of docker registry
+    issuer: 'Docker registry authentication and authorization endpoint'
+    # Private key for token signing
+    # certificate used on auth.token.rootcertbundle should signed by this key
+    key: /conf/server-key.pem

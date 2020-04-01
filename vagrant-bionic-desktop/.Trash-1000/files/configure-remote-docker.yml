@@ -1,0 +1,156 @@
+- name: Ensure communication over Docker daemon 2376 port is allowed
+  iptables:
+    chain: INPUT
+    action: insert
+    rule_num: 6
+    protocol: tcp
+    destination_port: 2376
+    ctstate: NEW,ESTABLISHED
+    jump: ACCEPT
+  notify: "Restart Docker"
+  when: provider == "oracle_cloud"
+
+- name: Ensure Docker service directory is present
+  file:
+    path: /etc/systemd/system/docker.service.d
+    state: directory
+
+- name: Ensure Docker daemon configuration overrides file is present
+  copy:
+    src: remote-docker/overrides.conf
+    dest: /etc/systemd/system/docker.service.d/overrides.conf
+  notify: "Restart Docker"
+
+- name: Ensure Docker daemon configuration file is present
+  template:
+    src: remote-docker/daemon.json.j2
+    dest: /etc/docker/daemon.json
+  notify: "Restart Docker"
+
+- name: Ensure Docker daemon CA certificate directory is present
+  file:
+    path: "{{ ca_cert_path }}"
+    state: directory
+
+- name: Ensure Docker daemon server certificate directory is present
+  file:
+    path: "{{ server_cert_path }}"
+    state: directory
+
+- name: Ensure Docker daemon client certificate directory is present
+  file:
+    path: "{{ client_cert_path }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+
+
+########## CA ##########
+
+# openssl genrsa -aes256 -out ca-key.pem 4096
+- name: Ensure CA private key is present
+  openssl_privatekey:
+    path: "{{ ca_cert_path }}/ca-key.pem"
+    passphrase: "{{ ca_private_key_passphrase }}"
+    cipher: auto
+    mode: 0400
+    select_crypto_backend: cryptography
+
+# openssl req -new -x509 -days 365 -key ca-key.pem -sha256 -out ca.pem
+- name: Ensure CA certificate request is present
+  openssl_csr:
+    path: "{{ client_cert_path }}/ca.csr"
+    privatekey_path: "{{ ca_cert_path }}/ca-key.pem"
+    privatekey_passphrase: "{{ ca_private_key_passphrase }}"
+    basic_constraints: CA:TRUE
+    create_subject_key_identifier: yes
+    basic_constraints_critical: yes
+    select_crypto_backend: cryptography
+
+- name: Ensure CA certificate is present
+  openssl_certificate:
+    path: "{{ client_cert_path }}/ca.pem"
+    csr_path: "{{ client_cert_path }}/ca.csr"
+    privatekey_path: "{{ ca_cert_path }}/ca-key.pem"
+    privatekey_passphrase: "{{ ca_private_key_passphrase }}"
+    provider: selfsigned
+    select_crypto_backend: cryptography
+    mode: 0444
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+  notify: "Restart Docker"
+
+
+########## SERVER ##########
+
+# openssl genrsa -out server-key.pem 4096
+- name: Ensure server private key is present
+  openssl_privatekey:
+    path: "{{ server_cert_path }}/server-key.pem"
+    mode: 0400
+    select_crypto_backend: cryptography
+
+# openssl req -subj "/CN=$HOST" -sha256 -new -key server-key.pem -out server.csr
+# echo subjectAltName = DNS:$HOST,IP:10.10.10.20,IP:127.0.0.1 >> extfile.cnf
+# echo extendedKeyUsage = serverAuth >> extfile.cnf
+- name: Ensure server certificate request is present
+  openssl_csr:
+    path: "{{ server_cert_path }}/server.csr"
+    privatekey_path: "{{ server_cert_path }}/server-key.pem"
+    select_crypto_backend: cryptography
+    common_name: "{{ hostvars.remote_docker.ansible_host }}"
+    subjectAltName: 
+      - "IP:{{ hostvars.remote_docker.ansible_host }}"
+    extended_key_usage:
+      - serverAuth
+
+# openssl x509 -req -days 365 -sha256 -in server.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out server-cert.pem -extfile extfile.cnf
+- name: Ensure server certificate is present
+  openssl_certificate:
+    path: "{{ server_cert_path }}/server-cert.pem"
+    csr_path: "{{ server_cert_path }}/server.csr"
+    ownca_path: "{{ client_cert_path }}/ca.pem"
+    ownca_privatekey_path: "{{ ca_cert_path }}/ca-key.pem"
+    ownca_privatekey_passphrase: "{{ ca_private_key_passphrase }}"
+    provider: ownca
+    select_crypto_backend: cryptography
+    mode: 0444
+  notify: "Restart Docker"
+
+
+########## CLIENT ##########
+
+# openssl genrsa -out key.pem 4096
+- name: Ensure client private key is present
+  openssl_privatekey:
+    path: "{{ client_cert_path }}/key.pem"
+    mode: 0400
+    select_crypto_backend: cryptography
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+
+# openssl req -subj '/CN=client' -new -key key.pem -out client.csr
+# echo extendedKeyUsage = clientAuth > extfile-client.cnf
+- name: Ensure client certificate request is present
+  openssl_csr:
+    path: "{{ client_cert_path }}/client.csr"
+    privatekey_path: "{{ client_cert_path }}/key.pem"
+    select_crypto_backend: cryptography
+    common_name: "client"
+    extended_key_usage:
+      - clientAuth
+
+# openssl x509 -req -days 365 -sha256 -in client.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out cert.pem -extfile extfile-client.cnf
+- name: Ensure client certificate is present
+  openssl_certificate:
+    path: "{{ client_cert_path }}/cert.pem"
+    csr_path: "{{ client_cert_path }}/client.csr"
+    ownca_path: "{{ client_cert_path }}/ca.pem"
+    ownca_privatekey_path: "{{ ca_cert_path }}/ca-key.pem"
+    ownca_privatekey_passphrase: "{{ ca_private_key_passphrase }}"
+    provider: ownca
+    select_crypto_backend: cryptography
+    mode: 0444
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+  notify: "Restart Docker"

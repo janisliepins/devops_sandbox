@@ -1,0 +1,110 @@
+---
+
+ansible_host: 10.57.14.99
+
+jenkins_ci_branch: "release/jenkins-{{ prefix }}"
+jenkins_ci_pipe_branch: "release/jenkins-{{ prefix }}"
+
+kubernetes_cluster_url: http://localhost
+
+casc_nodes: |
+  nodes:
+    - permanent:
+        labelString: "inst-ri0-ora121020"
+        launcher:
+          ssh:
+            credentialsId: "a5f7a0fb-3ecf-4760-9f23-b9a97df2c07a"
+            host: "10.57.14.87"
+            launchTimeoutSeconds: 180
+            maxNumRetries: 300
+            port: 22
+            retryWaitTime: 5
+            sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+        mode: EXCLUSIVE
+        name: "ci.CI-0-4803"
+        nodeDescription: "ri0 for WD2 docker installations"
+        nodeProperties:
+        - envVars:
+            env:
+            - key: "JAVA_HOME"
+              value: "/app/java/latest"
+        numExecutors: 1
+        remoteFS: "/app/ci"
+        retentionStrategy: "always"
+    - permanent:
+        labelString: "inst-ri0-ora122010"
+        launcher:
+          ssh:
+            credentialsId: "a5f7a0fb-3ecf-4760-9f23-b9a97df2c07a"
+            host: "10.57.14.85"
+            launchTimeoutSeconds: 180
+            maxNumRetries: 300
+            port: 22
+            retryWaitTime: 5
+            sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+        mode: EXCLUSIVE
+        name: "ci.CI-0-4804"
+        nodeDescription: "ri0 for WG docker installations"
+        nodeProperties:
+        - envVars:
+            env:
+            - key: "JAVA_HOME"
+              value: "/app/java/latest"
+        numExecutors: 1
+        remoteFS: "/app/ci"
+        retentionStrategy: "always"
+    - permanent:
+        labelString: "inst-ri0-ora193000"
+        launcher:
+          ssh:
+            credentialsId: "a5f7a0fb-3ecf-4760-9f23-b9a97df2c07a"
+            host: "10.57.14.80"
+            launchTimeoutSeconds: 300
+            maxNumRetries: 0
+            port: 22
+            retryWaitTime: 0
+            sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+        name: "ci.CI-0-4813"
+        nodeDescription: "ri0 for WG docker installations"
+        numExecutors: 1
+        remoteFS: "/app/ci"
+        retentionStrategy: "always"
+    - permanent:
+        labelString: "pkg-ri0-ora122010 pkg-ri0-ora122010-db2 test-tools manual sonar"
+        launcher:
+          ssh:
+            credentialsId: "a5f7a0fb-3ecf-4760-9f23-b9a97df2c07a"
+            host: "10.57.14.81"
+            launchTimeoutSeconds: 180
+            maxNumRetries: 300
+            port: 22
+            retryWaitTime: 5
+            sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+        mode: EXCLUSIVE
+        name: "ci.CI-0-4814"
+        nodeDescription: "ri0 for WD2"
+        nodeProperties:
+        - envVars:
+            env:
+            - key: "JAVA_HOME"
+              value: "/app/java/latest"
+        numExecutors: 1
+        remoteFS: "/app/ci"
+        retentionStrategy: "always"
+    - permanent:
+        labelString: "pkg-ri0-ora19.3-db2"
+        launcher:
+          ssh:
+            credentialsId: "a5f7a0fb-3ecf-4760-9f23-b9a97df2c07a"
+            host: "10.57.14.6"
+            launchTimeoutSeconds: 180
+            maxNumRetries: 300
+            port: 22
+            retryWaitTime: 5
+            sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+        mode: EXCLUSIVE
+        name: "ci.CI-0-4905"
+        nodeDescription: "WG- ORA19"
+        numExecutors: 1
+        remoteFS: "/app/ci"
+        retentionStrategy: "always"

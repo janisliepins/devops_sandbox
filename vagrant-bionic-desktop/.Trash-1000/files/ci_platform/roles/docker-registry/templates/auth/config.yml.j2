@@ -1,0 +1,168 @@
+server:
+  addr: :442
+  certificate: /cfg/server-cert.pem
+  key: /cfg/server-key.pem
+
+token:
+  issuer: "Docker registry authentication and authorization endpoint"
+  expiration: 900
+
+users:
+  "registryGui":
+    password: "$2y$05$nb8I2q2Ma.79q3S3TW3t8eYAJDkFN1F/tjjdvJcRwbx60ULR69v8K"
+  "internal":
+    password: "$2y$05$5LDOv9tOJS5HjNI1PdW3ZOiXU/S.vNlYESl10w8Ogm0MpFJcd6bu6"
+  "obap":
+    password: "$2y$05$5s3Cc04nfgaZY8.AV3gWBOlPYmAWqNDKT1MY.ppzbP569H7VBjCsK"
+  "mgu":
+    password: "$2y$05$gLGr.7e2fmaRRYX7KmHscOkEcq4eR6dou4L6asOT47FsLWnxwylIW"
+  "csp":
+    password: "$2y$05$pASeMutGvCpPXrwtyszjhej9MD.PtcuBHeVcEW8trNPLXiGJiln7q"
+  "adbsphub":
+    password: "$2y$05$pfL9r1vficWbMgGFIM2FlO//4jvVnCxfvZ/lFhkY44H98Iq6.POlm"
+  "ro":
+    password: "$2y$05$iBjF05QAinEt9CNyQTiHL.Q2sQxRSQTqjCgwkjjss7ra2d3PXeeGe"
+  "3d":
+    password: "$2y$05$X2Y1CM3qYOOoPPeYleD.Fu48B89qnVS/mbwGWIz1UsxWkmxRAOY3G"
+  "admin":
+    password: "$2y$05$zi0oouV3DaXuvPd9bFls4O1U2lgr6w/SNy4L9YXRIHVLs/wQ8Yj9q"
+
+ldap_auth:
+  addr: ldap.konts.lv:636
+  tls: always
+  insecure_tls_skip_verify: true
+  bind_dn: cn=pam,ou=sysadm,dc=konts,dc=lv
+  bind_password_file: /cfg/ldap_password
+  base: dc=konts,dc=lv
+  filter: (&(uid=${account})(objectClass=person))
+
+acl:
+################################################################################
+# System/admin users
+################################################################################
+  - match: {
+      account: "/(registryGui|internal|mgu|admin)/",
+      type: "repository",
+      name: "/.*/"
+    }
+    actions: ["*"]
+    comment: "System users can do anything with repositories"
+  - match: {
+      account: "/(registryGui|internal|mgu|admin)/",
+      type: "registry",
+      name: "catalog"
+    }
+    actions: ["*"]
+    comment: "System users can do anything within catalog"
+################################################################################
+# Obap project specific
+################################################################################
+  - match: {
+      account: "obap",
+      type: "repository",
+      name: "/obap/(fs|root|trfcc)/.+/",
+    }
+    actions: ["push","pull"]
+    comment: "Obap project user can do anything under obap/root and obap/fs"
+################################################################################
+# Open banking api HUB project
+################################################################################
+  - match: {
+      account: "adbsphub",
+      type: "repository",
+      name: "/adbsphub/.*/",
+    }
+    actions: ["push","pull"]
+    comment: "Obap HUB project user can do anything under adbsphub"
+################################################################################
+# CSP project specific
+################################################################################
+  - match: {
+      account: "csp",
+      type: "repository",
+      name: "/csp/.*/",
+    }
+    actions: ["push","pull"]
+    comment: "CSP project user can do anything under csp namespace"
+################################################################################
+# CI container installation project core
+################################################################################
+  - match: {
+      account: "/(nakiphas|vernjlor|puskejur|aksenale|liepijan|bundimar)/",
+      type: "repository",
+      name: "/cs/ci/.*/",
+    }
+    actions: ["push","pull"]
+    comment: "CI container namespace"
+  - match: {
+      account: "nakiphas",
+      type: "repository",
+      name: "/ext/.*/",
+    }
+    actions: ["push","pull"]
+    comment: "CI container namespace"
+  - match: {
+      account: "nakiphas",
+      type: "repository",
+      name: "/padss/.*/",
+    }
+    actions: ["push","pull"]
+    comment: "CI container namespace"
+  - match: {
+      account: "/(aksenale|nakiphas|bundimar|vernjlor|spirkale|puskejur|liepijan)/",
+      type: "repository",
+      name: "/devops/.*/",
+    }
+    actions: ["push","pull"]
+    comment: "CI container namespace"
+  - match: {
+      account: "csp",
+      type: "repository",
+      name: "/korn/hn/.*/",
+    }
+    actions: ["push","pull"]
+    comment: "CI container namespace"
+  - match: {
+      account: "gulbjmar",
+      type: "repository",
+      name: "/korn/.*/",
+    }
+    actions: ["push","pull"]
+    comment: "CI container namespace"
+################################################################################
+# Server3ds project
+################################################################################
+  - match: {
+      account: "3d",
+      type: "repository",
+      name: "/3d/.*/",
+    }
+    actions: ["push","pull"]
+    comment: "Server3ds projects namespace"
+################################################################################
+# Common LDAP users
+################################################################################
+  - match: {
+      account: "/.+/",
+      type: "repository",
+      name: "/user/${account}/.+/"
+    }
+    actions: ["push","pull"]
+    comment: "LDAP users can do anything under user/<username>/"
+################################################################################
+# Public access
+################################################################################
+  - match: {
+      account: "/.+/",
+      type: "repository",
+      name: "/.+/"
+    }
+    actions: ["pull"]
+    comment: "Logged in users can pull all images."
+  - match: {
+      account: "/.+/",
+      type: "registry",
+      name: "catalog"
+    }
+    actions: ["pull"]
+    comment: "Logged in users can query the catalog."

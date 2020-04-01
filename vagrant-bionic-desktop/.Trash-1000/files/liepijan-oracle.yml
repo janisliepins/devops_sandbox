@@ -1,0 +1,12 @@
+all:
+  hosts:
+    jenkins:
+      ansible_host: 172.21.120.154
+    remote_docker:
+      ansible_host: 172.21.120.155
+  vars:
+    provider: oracle_cloud    
+    ansible_python_interpreter: "/usr/bin/python3"
+    ansible_user: ubuntu
+    ansible_ssh_extra_args: "-o StrictHostKeyChecking=no"
+    ansible_ssh_private_key_file: "~/.ssh/id_rsa"

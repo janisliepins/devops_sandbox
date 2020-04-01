@@ -1,0 +1,74 @@
+- name: Ensure {{ jenkins_cs_prefix }} file directory is present
+  file:
+    path: "{{ jenkins_cs_file_path }}"
+    state: directory
+
+- name: Ensure {{ jenkins_cs_prefix }} casc directory is present
+  file:
+    path: "{{ jenkins_cs_file_path }}/casc"
+    state: directory
+
+- name: Ensure {{ jenkins_cs_prefix }} config file is present
+  template:
+    src: jenkins-cs/casc/jenkins.yml.j2
+    dest: "{{ jenkins_cs_file_path }}/casc/jenkins.yml"
+  # notify: "Restart Jenkins CS"
+
+- name: Ensure {{ jenkins_cs_prefix }} config file is present
+  template:
+    src: jenkins-cs/casc/unclassified.yml.j2
+    dest: "{{ jenkins_cs_file_path }}/casc/unclassified.yml"
+  # notify: "Restart Jenkins CS"
+
+- name: Ensure {{ jenkins_cs_prefix }} credential file is present
+  template:
+    src: jenkins-cs/casc/credentials.yml.j2
+    dest: "{{ jenkins_cs_file_path }}/casc/credentials.yml"
+  # notify: "Restart Jenkins CS"
+
+- name: Ensure {{ jenkins_cs_prefix }} security file is present
+  template:
+    src: jenkins-cs/casc/security.yml.j2
+    dest: "{{ jenkins_cs_file_path }}/casc/security.yml"
+  # notify: "Restart Jenkins CS"
+
+- name: Ensure {{ jenkins_cs_prefix }} tool file is present
+  template:
+    src: jenkins-cs/casc/tool.yml.j2
+    dest: "{{ jenkins_cs_file_path }}/casc/tool.yml"
+  # notify: "Restart Jenkins CS"
+
+- name: Ensure {{ jenkins_cs_prefix }} Docker Compose template is present
+  template:
+    src: jenkins-cs/docker-compose.yml.j2
+    dest: "{{ jenkins_cs_file_path }}/docker-compose.yml"
+
+- name: Ensure {{ jenkins_cs_prefix }} Docker Compose environment variable file is present
+  template:
+    src: jenkins-cs/.env.j2
+    dest: "{{ jenkins_cs_file_path }}/.env"
+
+- name: Ensure {{ jenkins_cs_prefix }} FTP config xml file is present
+  template:
+    src: jenkins-cs/jenkins.plugins.publish_over_ftp.BapFtpPublisherPlugin.xml.j2
+    dest: "{{ jenkins_cs_file_path }}/jenkins.plugins.publish_over_ftp.BapFtpPublisherPlugin.xml"
+
+- name: Ensure {{ jenkins_cs_prefix }} monster api config file is present
+  template:
+    src: jenkins-cs/config.json.j2
+    dest: "{{ jenkins_cs_file_path }}/config.json"
+
+- name: Log into {{ registry_host }}
+  docker_login:
+    registry: "{{ registry_host }}"
+    username: "{{ registry_credentials.username }}"
+    password: "{{ registry_credentials.password }}"
+
+- name: Ensure {{ jenkins_cs_prefix }} service is running
+  docker_compose:
+    project_name: "{{ jenkins_cs_prefix }}"
+    project_src: "{{ jenkins_cs_file_path }}"
+    pull: yes
+    # TEMP - templates changed do not restart container
+    recreate: always
+    state: present

@@ -1,0 +1,31 @@
+version: 0.1
+log:
+  level: debug
+  accesslog:
+    disabled: false
+auth:
+  token:
+    realm: https://{{ hostvars.docker_registry.ansible_host }}:442/auth
+    service: {{ hostvars.docker_registry.ansible_host }}:443
+    issuer: "Docker registry authentication and authorization endpoint"
+    rootcertbundle: /cfg/server-cert.pem
+http:
+  headers:
+    X-Content-Type-Options: [nosniff]
+    Access-Control-Allow-Methods: ['HEAD', 'GET', 'OPTIONS', 'DELETE']
+    Access-Control-Allow-Headers: ['Authorization']
+    Access-Control-Max-Age: [1728000]
+    Access-Control-Allow-Credentials: [true]
+    Access-Control-Expose-Headers: ['Docker-Content-Digest']
+
+  addr: 0.0.0.0:443
+  tls:
+    certificate: /cfg/server-cert.pem
+    key: /cfg/server-key.pem
+
+storage:
+  filesystem:
+    rootdirectory: /var/lib/registry
+    maxthreads: 100
+  delete:
+    enabled: true

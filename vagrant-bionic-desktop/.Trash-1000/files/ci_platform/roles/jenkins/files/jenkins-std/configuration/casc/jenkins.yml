@@ -1,0 +1,98 @@
+jenkins:
+  
+  # systemMessage: "Jenkins for Maven projects"
+
+  # Enable Agent -> Master Access Control
+  remotingSecurity:
+    enabled: true
+
+  # Cross-site request forgery protection
+  crumbIssuer:
+    standard:
+      excludeClientIPFromCrumb: false
+
+  # Azure AD
+  securityRealm:
+    azure:
+      clientId: "504e9f08-6e10-406d-96b1-125bd199fc79"
+      # Should be moved to any kind of secret to keep image save
+      clientSecret: "${AZURE_CLIENT_SECRET}"
+      tenant: "cbede638-a3d9-459f-8f4e-24ced73b4e5e"
+  authorizationStrategy:
+    azureAdMatrix:
+      permissions:
+      - "Overall/Administer:CI / CSP (9319fd11-bf77-4026-a9d9-6fde5d0def2a)"
+      - "Overall/Read:authenticated"
+
+  clouds:
+  - docker:
+      containerCap: 20
+      # Remove this to enable docker cloud
+      disabled:
+        disabledByChoice: true
+        enabledByChoice: false
+      dockerApi:
+        connectTimeout: 60
+        dockerHost:
+          # uri: "unix:///var/run/docker.sock"
+          uri: "${DOCKER_HOST_URI}"
+        readTimeout: 60
+      name: "docker"
+      templates:
+      - connector:
+          jnlp:
+            entryPointArguments:
+            - "sh"
+            - "-c"
+            - "wget ${JENKINS_URL}/jnlpJars/slave.jar && java -jar\
+              \ slave.jar -jnlpUrl ${JENKINS_URL}/computer/^${NODE_NAME}/slave-agent.jnlp\
+              \ -secret ^${JNLP_SECRET}"
+            entryPointArgumentsString: |-
+              sh
+              -c
+              wget ${JENKINS_URL}/jnlpJars/slave.jar && java -jar slave.jar -jnlpUrl ${JENKINS_URL}/computer/^${NODE_NAME}/slave-agent.jnlp -secret ^${JNLP_SECRET}
+            jnlpLauncher:
+              workDirSettings:
+                disabled: false
+                failIfWorkDirIsMissing: false
+                internalDir: "remoting"
+        dockerTemplateBase:
+          image: "jenkins-agent:latest"
+          network: "ci-tools"
+        instanceCapStr: "5"
+        labelString: "jenkins-agent"
+        name: "jenkins-agent"
+        pullStrategy: PULL_NEVER
+        pullTimeout: 300
+        remoteFs: "/home/ci"
+        removeVolumes: true
+
+  - kubernetes:
+      connectTimeout: 5
+      containerCapStr: "10"
+      credentialsId: "oci.kubernetes.secret"
+      jenkinsUrl: "${JENKINS_URL}"
+      maxRequestsPerHostStr: "32"
+      name: "kubernetes"
+      namespace: "default"
+      readTimeout: 15
+      serverCertificate: |-
+        ${OCI_KUBERNETES_CERT}
+      serverUrl: "${OCI_KUBERNETES_URL}"
+      templates:
+      - containers:
+        - image: "jenkins/jnlp-slave"
+          livenessProbe:
+            failureThreshold: 0
+            initialDelaySeconds: 0
+            periodSeconds: 0
+            successThreshold: 0
+            timeoutSeconds: 0
+          name: "jnlp"
+          ttyEnabled: true
+          workingDir: "/home/jenkins"
+        hostNetwork: false
+        label: "jnlp-slave"
+        name: "jnlp slave"
+        namespace: "default"
+        yamlMergeStrategy: "override"

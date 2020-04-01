@@ -1,0 +1,41 @@
+---
+
+- name: Ensure Docker registry image is present on host
+  docker_image:
+    name: "{{ registry_image_name }}:{{ registry_image_tag }}"
+    force_source: yes
+    source: pull
+    state: present
+
+- name: Ensure {{ registry_data_dir }} folder is present on host
+  file:
+    path: "{{ registry_data_dir }}"
+    state: directory
+
+- name: Ensure {{ registry_config_dir }} folder is present on host
+  file:
+    path: "{{ registry_config_dir }}"
+    state: directory
+
+- name: Ensure Docker registry configuration file is present on host
+  template:
+    src: registry/config.yml.j2
+    dest: "{{ registry_config_dir }}/config-registry.yml"
+  notify: "Restart Docker registry service"
+
+- name: Ensure Docker registry service configuration file is present on host
+  template:
+    src: registry/service.j2
+    dest: /lib/systemd/system/docker-registry.service
+  notify: "Restart Docker registry service"
+
+- name: Ensure Docker {{ prefix }} registry server certificates are present on host
+  copy:
+    content: "{{ item.value.content }}"
+    dest: "{{ registry_config_dir }}/{{ item.value.name }}"
+  loop: "{{  lookup('dict', hostvars.docker_registry.certificates) }}"
+  no_log: true
+  notify: "Restart Docker registry service"
+
+
+

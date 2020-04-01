@@ -1,0 +1,64 @@
+version: '3'
+
+services:
+  {{ jenkins_cs_prefix }}:
+    container_name: {{ jenkins_cs_prefix }}
+    hostname: {{ jenkins_cs_prefix }}
+    image: {{ jenkins_cs_image }}
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - jenkins_log:/home/jenkins/log
+      - jenkins_build:/home/jenkins/builds
+      #- jenkins_home:/home/jenkins/instance
+      - ci_repo:/home/jenkins/cs.test.ci
+      - ./casc:/home/jenkins/casc
+      - ./jenkins.plugins.publish_over_ftp.BapFtpPublisherPlugin.xml:/home/jenkins/instance/jenkins.plugins.publish_over_ftp.BapFtpPublisherPlugin.xml:ro
+
+  # {{ monster_api_prefix }}:
+  #   container_name: {{ monster_api_prefix }}
+  #   restart: always
+  #   image: {{ monster_api_image }}
+  #   #use this, if you need to create/recreate tables in DB
+  #   command: -r
+  #   ports:
+  #     - {{ hostvars.jenkins.ansible_host }}:{{ moster_api_http_port }}:9002
+  #   volumes:
+  #     - ./config.json:/usr/app/config.json:ro
+  #   depends_on:
+  #     - {{ monster_db_prefix }}
+  #   entrypoint:
+  #     - ./wait-for-it.sh
+  #     - {{ monster_db_prefix }}:3306
+  #     - "--"
+  #     - node
+  #     - monster.js
+
+  # {{ monster_db_prefix }}:
+  #   container_name: {{ monster_db_prefix }}
+  #   restart: always
+  #   ports:
+  #     - {{ hostvars.jenkins.ansible_host }}:9306:3306
+  #   image: {{ monster_db_image }}
+  #   # temporary. Must be deleted after testing.
+  #   environment:
+  #     - MYSQL_DATABASE={{ MYSQL_DATABASE }}
+  #     - MYSQL_USER={{ MYSQL_USER }}
+  #     - MYSQL_PASSWORD={{ MYSQL_PASSWORD }}
+  #     - MYSQL_ROOT_PASSWORD={{ MYSQL_ROOT_PASSWORD }}
+  #     - MYSQL_ROOT_HOST={{ MYSQL_ROOT_HOST }}
+  #   volumes:
+  #     - monster_datadir:/var/lib/mysql
+
+networks:
+  default:
+    external:
+      name: {{ jenkins_docker_network_name }}
+
+volumes:
+  jenkins_log:
+  jenkins_build:
+  #jenkins_home:
+  ci_repo:
+  monster_datadir:

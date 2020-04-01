@@ -1,0 +1,24 @@
+[Unit]
+Description=Docker registry web ({{ prefix }})
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+ExecStartPre=-/usr/bin/docker container rm --force {{ registry_web_container_name }}
+ExecStart=/usr/bin/docker run \
+        --name {{ registry_web_container_name }} \
+        --mount type=bind,src={{ registry_config_dir }},dst=/conf,readonly \
+        --mount type=bind,src={{ registry_web_dir }},dst=/data \
+        -e 'CONFIG_PATH=/conf/config-registry-web.yml' \
+        -p 8888:8080 \
+         {{ registry_web_image_name }}:{{ registry_web_image_tag }}
+ExecStop=/usr/bin/docker container stop {{ registry_web_container_name }}
+ExecStopPost=-/usr/bin/docker container rm --force {{ registry_web_container_name }}
+Restart=always
+StartLimitBurst=30
+StartLimitInterval=60s
+
+[Install]
+WantedBy=multi-user.target
+

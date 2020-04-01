@@ -1,0 +1,63 @@
+---
+
+kubernetes_cluster_url: "http://localhost"
+docker_template_base: "docker.konts.lv"
+docker_stash_key_volume: "preprod.jenkins.stash.key"
+jenkins_docker_network_name: "{{ prefix }}-jenkins.net"
+
+# Jenkins CS vars
+jenkins_cs_prefix: "{{ prefix }}-jenkins-cs"
+jenkins_cs_image_tag: test
+jenkins_cs_image: "{{ production_docker_registry_host }}/devops/jenkins:{{ jenkins_cs_image_tag }}"
+jenkins_cs_docker_cloud_credential_id: "{{ prefix }}-DockerD"
+jenkins_cs_file_path: "/home/{{ docker_user }}/{{ jenkins_cs_prefix }}"
+jenkins_cs_version: "2.190.1"
+jenkins_cs_email: "CI <ci@tieto.com>"
+stash_root_url: "http://cvs.konts.lv:7990"
+jenkins_cs_builder_network_name: "{{ jenkins_cs_prefix }}-builder.net"
+jenkins_cs_builder_volume_name: "{{ jenkins_cs_prefix }}-stash-key"
+
+docker_cloud_build_images:
+  busybox:
+    label: "busybox"
+    original_tag: "docker.konts.lv/ext/busybox:latest"
+    new_tag: "{{ hostvars.docker_registry.ansible_host }}/ext/busybox:latest"
+  dc_prebuild_wg:
+    label: "dc-prebuild-wg-latest"
+    original_tag: "docker.konts.lv/cs/ci/wg/build/ora8/prod:latest"
+    new_tag: "{{ hostvars.docker_registry.ansible_host }}/cs/ci/wg/build/ora8/{{ prefix }}:latest"
+  dc_prebuild_wd2:
+    label: "prebuild"
+    original_tag: "docker.konts.lv/cs/ci/wd2/build/prod:latest"
+    new_tag: "{{ hostvars.docker_registry.ansible_host }}/cs/ci/wd2/build/{{ prefix }}:latest"
+  dc_wg_clean:
+    label: "dc-wg-clean"
+    original_tag: "docker.konts.lv/cs/ci/wg/build/prod:clean"
+    new_tag: "{{ hostvars.docker_registry.ansible_host }}/cs/ci/wg/build/{{ prefix }}:clean"
+
+# Monster vars
+monster_api_image_tag: latest
+monster_api_image: "{{ production_docker_registry_host }}/devops/jenkins-tools/monster:{{ monster_api_image_tag }}"
+monster_db_image_tag: 10.3.14-bionic
+monster_db_image: "mariadb:{{ monster_db_image_tag }}"
+monster_api_prefix: "{{ prefix }}-monster-api"
+monster_db_prefix: "{{ prefix }}-monster-db"
+moster_api_http_port: 19002
+MYSQL_DATABASE: "{{ prefix }}-monster"
+MYSQL_USER: jenkins
+MYSQL_ROOT_HOST: "{{ prefix }}-monster-db"
+monster_monitoring_exclude_jobs_pattern: "^(Misc/(.*Dispatcher|CheckJobsConfig|.*PkgMergeCommit)|WORK/).*"
+monster_api_enabled: true
+monster_api_include_jobs_pattern: "^(OnCommit|DIST/).*"
+
+# Jenkins STD vars
+jenkins_std_prefix: "{{ prefix }}-jenkins-std"
+jenkins_std_file_path: "/home/{{ docker_user }}/{{ jenkins_std_prefix }}"
+jenkins_std_image_tag: prefix
+jenkins_std_image: "{{ production_docker_registry_host }}/devops/jenkins-std:{{ jenkins_std_image_tag }}"
+
+# Nginx vars
+nginx_prefix: "{{ prefix }}-jenkins-nginx"
+nginx_file_path: "/home/{{ docker_user }}/{{ nginx_prefix }}"
+nginx_image_tag: alpine
+nginx_image: "{{ production_docker_registry_host }}/devops/jenkins/nginx:{{ nginx_image_tag }}"

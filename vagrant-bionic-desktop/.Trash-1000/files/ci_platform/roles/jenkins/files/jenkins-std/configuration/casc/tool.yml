@@ -1,0 +1,33 @@
+tool:
+  git:
+    installations:
+    - home: "git"
+      name: "Default"
+  jdk:
+    installations:
+    - name: "JDK11"
+      properties:
+      - installSource:
+          installers:
+          - zip:
+              url: "${TOOLS_BASE_URL}/tools/jdk/jdk-11_28_linux-x64_bin.tar.gz"
+    - name: "JDK10"
+      properties:
+      - installSource:
+          installers:
+          - zip:
+              url: "${TOOLS_BASE_URL}/tools/jdk/jdk-10.0.2_13_linux-x64_bin.tar.gz"
+    - name: "JDK8"
+      properties:
+      - installSource:
+          installers:
+          - zip:
+              url: "${TOOLS_BASE_URL}/tools/jdk/jdk-8u181-linux-x64.tar.gz"
+  maven:
+    installations:
+    - name: "3.6.0"
+      properties:
+      - installSource:
+          installers:
+          - zip:
+              url: "${TOOLS_BASE_URL}/tools/maven/apache-maven-3.6.0-bin.tar.gz"

@@ -1,0 +1,33 @@
+---
+
+- name: Ensure Docker daemon configuration file is present on {{ prefix }} Jenkins host
+  template:
+    src: jenkins/daemon.json.j2
+    dest: /etc/docker/daemon.json
+  notify: "Restart Docker"
+
+- name: Ensure Docker certificate directory for production registry is present on {{ prefix }} Jenkins host
+  file:
+    path: "/etc/docker/certs.d/{{ production_docker_registry_host }}"
+    state: directory
+    recurse: yes
+
+- name: Ensure production Docker registry client certificate is present on {{ prefix }} Jenkins host
+  copy:
+    content: "{{ prod_docker_registry_ca }}"
+    dest: "/etc/docker/certs.d/{{ production_docker_registry_host }}/ca.crt"
+  no_log: true
+  notify: "Restart Docker"
+
+- name: Ensure Docker client certificate directory for {{ prefix }} registry is present
+  file:
+    path: "/etc/docker/certs.d/{{ hostvars.docker_registry.ansible_host }}"
+    state: directory
+    recurse: yes
+
+- name: Ensure Docker client certificate for {{ prefix }} registry is present
+  copy:
+    content: "{{ docker_registry_ca }}"
+    dest: "/etc/docker/certs.d/{{ hostvars.docker_registry.ansible_host }}/ca.crt"
+  no_log: true
+  notify: "Restart Docker"

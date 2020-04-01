@@ -1,0 +1,24 @@
+[Unit]
+Description=Docker registry cache ({{ prefix }})
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+ExecStartPre=-/usr/bin/docker container rm --force {{ registry_cache_container_name }}
+ExecStart=/usr/bin/docker run \
+          --name {{ registry_cache_container_name }} \
+          -v {{ cache_config_dir }}:/cfg \
+          -v {{ cache_data_dir }}:/var/lib/registry \
+          -p 8080:8080 \
+          --env-file {{ cache_config_dir }}/env.file \
+          {{ registry_cache_image_name }}:{{ registry_cache_image_tag }} \
+          /cfg/config.yml
+ExecStop=/usr/bin/docker container stop {{ registry_cache_container_name }}
+ExecStopPost=-/usr/bin/docker container rm --force {{ registry_cache_container_name }}
+Restart=always
+StartLimitBurst=30
+StartLimitInterval=60s
+
+[Install]
+WantedBy=multi-user.target

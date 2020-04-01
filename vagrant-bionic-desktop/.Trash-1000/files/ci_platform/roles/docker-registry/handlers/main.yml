@@ -1,0 +1,29 @@
+---
+
+- name: Restart Docker registry service
+  systemd:
+    name: docker-registry
+    enabled: yes
+    daemon_reload: yes
+    state: restarted
+
+- name: Restart Docker registry auth service
+  systemd:
+    name: docker-registry-auth
+    enabled: yes
+    daemon_reload: yes
+    state: restarted
+
+- name: Restart Docker registry cache service
+  systemd:
+    name: docker-registry-cache
+    enabled: yes
+    daemon_reload: yes
+    state: restarted
+
+- name: Restart Docker registry web service
+  systemd:
+    name: docker-registry-web
+    enabled: yes
+    daemon_reload: yes
+    state: restarted

@@ -1,0 +1,8 @@
+- name: Ensure Jenkins Docker network is present
+  docker_network:
+    name: "{{ jenkins_docker_network_name }}"
+    driver: bridge
+    ipam_driver: default
+    ipam_config:
+      - subnet: 172.31.0.0/16
+    state: present

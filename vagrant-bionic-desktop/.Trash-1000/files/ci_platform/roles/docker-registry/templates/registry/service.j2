@@ -1,0 +1,23 @@
+[Unit]
+Description=Docker local registry ({{ prefix }})
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+ExecStartPre=-/usr/bin/docker container rm --force {{ registry_container_name }}
+ExecStart=/usr/bin/docker run \
+    --name {{ registry_container_name }} \
+    --mount type=bind,src={{ registry_config_dir }},dst=/cfg,readonly \
+    --mount type=bind,src={{ registry_data_dir }},dst=/var/lib/registry \
+    -p 443:443 \
+    {{ registry_image_name }}:{{ registry_image_tag }} \
+    /cfg/config-registry.yml
+ExecStop=/usr/bin/docker container stop {{ registry_container_name }}
+ExecStopPost=-/usr/bin/docker container rm --force {{ registry_container_name }}
+Restart=always
+StartLimitBurst=30
+StartLimitInterval=60s
+
+[Install]
+WantedBy=multi-user.target

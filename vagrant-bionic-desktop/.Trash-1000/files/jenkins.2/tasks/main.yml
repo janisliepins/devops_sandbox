@@ -1,0 +1,16 @@
+- import_tasks: jenkins-docker-network.yml
+  tags:
+    - always
+- import_tasks: jenkins-cs.yml
+  tags:
+    - jenkins-cs
+- import_tasks: jenkins-cs-builders.yml
+  tags:
+    - jenkins-cs
+    - jenkins-cs-builders
+- import_tasks: jenkins-std.yml  
+  tags:
+    - jenkins-std
+- import_tasks: nginx.yml
+  tags:
+    - nginx

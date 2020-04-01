@@ -1,0 +1,10 @@
+- name: Read cert
+  slurp:
+    src: "{{ client_cert_path }}/ca.pem"
+  register: result
+
+- set_fact:
+    client_key: "{{ result['content'] | b64decode }}"
+
+- debug:
+    msg: "{{ client_key }}"

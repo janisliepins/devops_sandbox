@@ -1,0 +1,9 @@
+{
+  "hosts": ["tcp://0.0.0.0:2376","fd://"],
+  "registry-mirrors": ["http://{{ registry_host }}:8080"],
+  "tls": true,
+  "tlscacert": "{{ client_cert_path }}/ca.pem",
+  "tlscert": "{{ server_cert_path }}/server-cert.pem",
+  "tlskey": "{{ server_cert_path }}/server-key.pem",
+  "tlsverify": true
+}

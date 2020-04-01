@@ -1,0 +1,23 @@
+[Unit]
+Description=Docker registry auth ({{ prefix }})
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+ExecStartPre=-/usr/bin/docker container rm --force {{ registry_auth_container_name }}
+ExecStart=/usr/bin/docker run \
+                  --name {{ registry_auth_container_name }} \
+                  --mount type=bind,src={{ registry_config_dir }},dst=/cfg,readonly \
+                  -p 442:442 \
+                  {{ registry_auth_image_name }}:{{ registry_auth_image_tag }} \
+                  -logtostderr \
+                  /cfg/config-registry-auth.yml
+ExecStop=/usr/bin/docker container stop {{ registry_auth_container_name }}
+ExecStopPost=-/usr/bin/docker container rm --force {{ registry_auth_container_name }}
+Restart=always
+StartLimitBurst=30
+StartLimitInterval=60s
+
+[Install]
+WantedBy=multi-user.target

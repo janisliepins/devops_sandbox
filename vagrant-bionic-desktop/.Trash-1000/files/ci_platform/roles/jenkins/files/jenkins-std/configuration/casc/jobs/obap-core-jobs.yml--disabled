@@ -1,0 +1,36 @@
+jobs:
+  - script: >
+      folder('obap')
+
+      folder('obap/core') {
+          displayName('OBAP Core')
+      }
+
+      ['auth-core-backend', 'client-apps-backend', 'content-mgmt-backend', 'obcore-frontend'].each{ projectName ->
+          
+          println '*** Create job: obap/core/' + projectName
+
+          multibranchPipelineJob('obap/core/' + projectName) {
+              branchSources {
+                  git {
+                      id = 'obap/' + projectName
+                      remote('ssh://git@gitlab.local.net/obap/' + projectName + '.git')
+                      credentialsId('git-ssh-key')
+                  }
+              }
+              factory {
+                  pipelineBranchDefaultsProjectFactory {
+                      scriptId 'jenkinsfile-mvn'
+                      useSandbox true
+                  }
+              }
+              orphanedItemStrategy {
+                  discardOldItems {
+                      numToKeep(50)
+                  }
+              }
+              triggers {
+                  periodic(1)
+              }
+          }
+      }

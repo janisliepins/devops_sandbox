@@ -1,0 +1,6 @@
+---
+
+- import_playbook: vsftp-playbook.yml
+- import_playbook: docker-install-playbook.yml
+- import_playbook: docker-registry-playbook.yml
+- import_playbook: jenkins-playbook.yml

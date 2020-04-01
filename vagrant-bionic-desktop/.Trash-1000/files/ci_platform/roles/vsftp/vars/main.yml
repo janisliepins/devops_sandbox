@@ -1,0 +1,3 @@
+---
+
+ftp_home_dir: "{{ hostvars.ftp.ftp_home_dir }}"
