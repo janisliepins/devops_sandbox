@@ -1,4 +1,0 @@
----
-
-ansible_host: 10.57.14.166
-ftp_home_dir: /home/ftp

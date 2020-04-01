@@ -1,9 +1,0 @@
-all:
-  hosts:
-    jenkins:
-      ansible_host: 10.57.9.89
-    remote_docker:
-      ansible_host: 10.57.6.135
-  vars:
-    provider: oracle_cloud
-    ansible_ssh_private_key_file: "~/.ssh/id_rsa"

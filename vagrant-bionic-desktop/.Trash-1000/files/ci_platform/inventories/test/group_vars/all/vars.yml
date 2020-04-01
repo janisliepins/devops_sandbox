@@ -1,9 +1,0 @@
----
-
-ansible_python_interpreter: '/usr/bin/python3'
-ansible_user: ansible
-ansible_password: "{{ vm_sudo_pass }}"
-ansible_become_password: "{{ vm_sudo_pass }}"
-
-prefix: test
-jenkins_dns: test-jenkins.konts.lv

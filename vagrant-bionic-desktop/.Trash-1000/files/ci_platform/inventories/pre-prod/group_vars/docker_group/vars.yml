@@ -1,5 +1,0 @@
----
-
-docker_user: docker
-docker_user_home: /home/{{ docker_user }}
-

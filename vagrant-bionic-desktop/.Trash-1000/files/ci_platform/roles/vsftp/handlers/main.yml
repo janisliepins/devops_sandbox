@@ -1,9 +1,0 @@
----
-
-  - name: "Restart vsftpd service"
-    systemd:
-      name: vsftpd
-      daemon_reload: yes
-      enabled: yes
-      state: restarted
-  

@@ -1,3 +1,0 @@
-groovy:
-  - script: >
-      println("************ This is Groovy script!");

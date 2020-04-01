@@ -1,7 +1,0 @@
----
-
-# - name: Restart Jenkins CS
-#   docker_container:
-#     name: "{{ jenkins_cs_prefix }}"
-#     state: started
-#     restart: yes
